@@ -1,32 +1,55 @@
-import re, json
+import re, json , sys
 
-chat_file = 'chat.txt'
+person1 = ""
+person2 = ""
+chat_file = ""
+try :
+    param1 = sys.argv[1]
+    person1 = sys.argv[2]
+    person2 = sys.argv[3]
 
-chat = open(chat_file, encoding='utf-8')
+    split_param = param1.split('.')
+    if len(split_param) == 1 :
+        chat_file = param1 + '.txt'
+
+    elif split_param[-1] == 'txt' :
+        chat_file = param1
+    else :
+        raise ValueError("")
+
+except :
+    print("pass cli arguments : 'file name'   'person1'  'person2'" )
+    exit()
+
+try :
+    chat = open(chat_file, encoding='utf-8')
+except : 
+    print("no such file or directory")
+    exit()
+
+prev_time = ''
+prev_sender = ''
 lines = []
-
-flag = False
-count = 0
 for line in chat:
-    if re.search(r"[\d]{1,2}/[\d]{1,2}/[\d]{2}", line):
-        lines.append(line) #This means a whatsapp text.
+    if re.search(r"[\d]{1,2}/[\d]{1,2}/[\d]{2}, [\d]{1,2}:[\d]{1,2} ", line):
+        line_split = line.split()
+        date = line_split[0][:-1]
+        time = line_split[1] + " " + line_split[2]
+        sender = line[line.index('-') + 2:line.index(':',line.index('-'))]
+        msg = ' '.join(line_split[line_split.index(sender.split()[-1] + ':') + 1:])
+
+        if prev_time == time and prev_sender == sender :
+            lines[-1][-1] += '\n ' + msg
+        else :
+            prev_sender = sender 
+            prev_time = time
+            lines.append([date,time,sender,msg]) #This means a whatsapp text.
     else:
-        lines[-1] += line #For extra paragraphs or lines in messages.
+        lines[-1][-1] += '\n ' + line[:-1] #For extra paragraphs or lines in messages.
 
 data = {}
+for [date,time,sender,message] in lines:
 
-lines = [re.split(' ', line) for line in lines] #Splits the line considering spaces.
-
-for line in lines:
-    date = line[0][0:-1] #Date is present as "mm/dd/yy,"
-    time = line[1]
-    sender = line[3]+' '+line[4][0:-1] #Considering the name of the sender consists of first name and second name.
-    message = ''
-    for i in range(5,len(line)):
-        message += line[i]+' ' #After the name, each data is a message.
-    
-    person1 = "First Person"
-    person2 = "Second Person"
     #If the data is useful (i.e not change of number notification or encryption message) then store it in dictionary
     if (person1 in sender) or (person2 in sender):
         if date in data:
@@ -38,7 +61,9 @@ for line in lines:
             data[date] = {}
             data[date][time] = [{"sender":sender, "message":message}]
 
-json_file_name = 'chat.json' #Replace with name of the file you want.
+json_file_name =  chat_file[: -chat_file[::-1].index('.') - 1]+'.json' #Replace with name of the file you want.
 with open(json_file_name, 'w') as chat:
     json.dump(data, chat, indent=3)
+
+print("Completed ...")
      

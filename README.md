@@ -1,5 +1,5 @@
 # Whatsapp-Text-To-JSON
-This is a python file to convert whatsapp text to JSON file
+This is a python script to convert whatsapp chats text file  to JSON 
 
 Export your whatsapp chat file as a txt from your whatsapp chat: 
 1. Click on the three dots on the top right corner of the personal chat.
@@ -10,8 +10,9 @@ Export your whatsapp chat file as a txt from your whatsapp chat:
 
 Now store the whatsapp.py file in the same directory as your chat file.
 Perform the following before running:
-1. Declare chat_file with the name of your file.
-2. Declare the first and second person names in person1 and person2 variables respectively.
 
-Run the file using the command python whatsapp.py
-Your json file will be saved in the same directory.
+pass the file name  1st person name   2nd person name     as cli arguments while running the file .
+
+whatsapp.py  'chat_file_name'  'ken adams'  'regina phelange'
+
+Your json file will be saved in the same directory  carring the same name with JSON format .
