@@ -32,18 +32,27 @@ prev_sender = ''
 lines = []
 for line in chat:
     if re.search(r"[\d]{1,2}/[\d]{1,2}/[\d]{2}, [\d]{1,2}:[\d]{1,2} ", line):
-        line_split = line.split()
-        date = line_split[0][:-1]
-        time = line_split[1] + " " + line_split[2]
-        sender = line[line.index('-') + 2:line.index(':',line.index('-'))]
-        msg = ' '.join(line_split[line_split.index(sender.split()[-1] + ':') + 1:])
+        if (person1 in line) or (person2 in line):
+            line_split = line.split()
+            date = line_split[0][:-1]
+            time = line_split[1] + " " + line_split[2]
+            try:
+                sender = line[line.index('-') + 2:line.index(':',line.index('-'))]
+            except:
+                print(line)
+                continue
+            msg = ' '.join(line_split[line_split.index(sender.split()[-1] + ':') + 1:])
 
-        if prev_time == time and prev_sender == sender :
-            lines[-1][-1] += '\n ' + msg
-        else :
-            prev_sender = sender 
-            prev_time = time
-            lines.append([date,time,sender,msg]) #This means a whatsapp text.
+            if prev_time == time and prev_sender == sender :
+                try:
+                    lines[-1][-1] += '\n ' + msg
+                except:
+                    print(line)
+                    continue
+            else :
+                prev_sender = sender 
+                prev_time = time
+                lines.append([date,time,sender,msg]) #This means a whatsapp text.
     else:
         lines[-1][-1] += '\n ' + line[:-1] #For extra paragraphs or lines in messages.
 
