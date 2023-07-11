@@ -1,37 +1,50 @@
-import re, sys, json, os
+import re
+import sys
+import json
+import os
 
-try:
-    chatFile = os.path.abspath(sys.argv[1])
-    if not chatFile.endswith(".txt"):
-        raise ValueError("")
-except:
-    print("Wrong file extension")
+def convert_to_json(chat_file):
+    try:
+        chat_file = os.path.abspath(chat_file)
+        if not chat_file.endswith(".txt"):
+            raise ValueError("")
+    except:
+        print("Wrong file extension")
+        return
 
-chat = open(chatFile, encoding='utf-8')
-dateRegex = r"[\d]{1,2}/[\d]{1,2}/[\d]{2}"
-timeRegex = r"[\d]{2}:[\d]{2}"
-messageRegex = dateRegex+', '+timeRegex+' - *'
-lines = []
+    chat = open(chat_file, encoding='utf-8')
+    message_regex = r'\[(\d{1,2}/\d{1,2}/\d{2}, \d{1,2}:\d{2}:\d{2} [APM]{2})\] ([^:]+): (.+)'
+    lines = []
 
-for line in chat:
-    messageIndex = re.search(messageRegex, line)
-    if messageIndex != None and messageIndex.start() == 0:
-        date = re.search(dateRegex, line).group(0)
-        time = re.search(timeRegex, line).group(0)
-        sender = line[line.index('-')+2 : line.index(':', line.index('-'))]
-        text = line[line.index(':', line.index(sender))+2 : ]
-        lines.append([date,time,sender,text])
+    for line in chat:
+        line = line.strip()  # Remove leading/trailing whitespaces
+        message_match = re.match(message_regex, line)
+        if message_match:
+            date_time = message_match.group(1)
+            sender = message_match.group(2)
+            text = message_match.group(3)
+            lines.append([date_time, sender, text])
+        elif lines:  # Add this condition to handle empty lines
+            lines[-1][-1] += '\n' + line
+
+    data = {}
+    for [date_time, sender, text] in lines:
+        date, time = date_time.split(', ')
+        if date not in data:
+            data[date] = {}
+        if time not in data[date]:
+            data[date][time] = []
+        data[date][time].append({"sender": sender, "message": text})
+
+    json_file_name = os.path.abspath(chat_file[:chat_file.index('.txt')] + '.json')
+    with open(json_file_name, 'w') as json_file:
+        json.dump(data, json_file, indent=3)
+
+    print("Conversion successful. JSON file created:", json_file_name)
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("Please provide the chat file name.")
     else:
-        lines[-1][-1] += '\n' + line[:-1]
-
-data = {}
-for [date,time,sender,text] in lines:
-    if not (date in data):
-        data[date] = {}
-    if not (time in data[date]):
-        data[date][time] = []
-    data[date][time].append({"sender":sender, "message":text})
-
-jsonFileName = os.path.abspath(chatFile[:chatFile.index('.txt')]+'.json')
-with open(jsonFileName, 'w') as jsonFile:
-    json.dump(data, jsonFile, indent=3)
+        chat_file_name = sys.argv[1]
+        convert_to_json(chat_file_name)
